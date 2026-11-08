@@ -2,7 +2,7 @@ use std::fs;
 use std::io::{Cursor, Write as _};
 
 use uu_archive_clickteam_install_creator_v2::{
-    ExtractOptions, Installer, compile_filter, safe_relative_path,
+    Entry, ExtractOptions, FileTimes, Installer, compile_filter, filter_matches, safe_relative_path,
 };
 
 const STRUCT_LEN: usize = 78;
@@ -207,4 +207,34 @@ fn dangerous_names_stay_relative() {
         safe_relative_path("..\\..\\windows\\system32\\evil.dll"),
         std::path::PathBuf::from("__dotdot__/__dotdot__/windows/system32/evil.dll")
     );
+}
+
+fn bare_entry(name: &str) -> Entry {
+    Entry {
+        name: name.to_owned(),
+        size: 1,
+        offset: 0,
+        compressed: 1,
+        checksum: 0,
+        attributes: 0,
+        blob_id: 0,
+        times: FileTimes::default(),
+    }
+}
+
+#[test]
+fn star_stays_in_one_directory_and_double_star_is_recursive() {
+    let entry = bare_entry("cstrike/maps/de_dust2.bsp");
+
+    let direct = compile_filter("cstrike/maps/*").unwrap();
+    assert!(filter_matches(&direct, &entry));
+
+    let shallow = compile_filter("cstrike/*").unwrap();
+    assert!(!filter_matches(&shallow, &entry));
+
+    let recursive = compile_filter("cstrike/**").unwrap();
+    assert!(filter_matches(&recursive, &entry));
+
+    let recursive_extension = compile_filter("cstrike/**/*.bsp").unwrap();
+    assert!(filter_matches(&recursive_extension, &entry));
 }

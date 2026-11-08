@@ -1,0 +1,35 @@
+[package]
+name = "uu-archive-clickteam-install-creator-v2-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+
+[dependencies.uu-archive-clickteam-install-creator-v2]
+path = ".."
+
+[[bin]]
+name = "installer_open"
+path = "fuzz_targets/installer_open.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "entry_stream"
+path = "fuzz_targets/entry_stream.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "safe_paths"
+path = "fuzz_targets/safe_paths.rs"
+test = false
+doc = false
+bench = false

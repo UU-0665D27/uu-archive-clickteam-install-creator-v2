@@ -2,13 +2,14 @@
 name = "uu-archive-clickteam-install-creator-v2"
 version = "0.1.0"
 edition = "2024"
+authors = ["UU <uu230196@gmail.com>"]
 description = "Unpacker for Clickteam Install Creator 2 self-extracting installers"
-keywords = ["archive", "unpacker", "installer", "clickteam"]
+repository = "https://github.com/UU-0665D27/uu-archive-clickteam-install-creator-v2"
+readme = "README.md"
+license = "MIT"
+keywords = ["clickteam", "installer", "unpacker", "archive", "sfx"]
 categories = ["compression", "parser-implementations"]
-
-[lib]
-name = "uu_archive_clickteam_install_creator_v2"
-path = "src/lib.rs"
+exclude = ["/fuzz"]
 
 [lints.clippy]
 all = "deny"

@@ -102,6 +102,7 @@ impl<R: Read + Seek> Installer<R> {
             .ok_or(Error::UnexpectedEof(position))?;
         blocks.push(read_payload(
             &mut reader,
+            file_size,
             start,
             le_u32(&header, 0).ok_or(Error::UnexpectedEof(start))?,
             le_u32(&header, 4).ok_or(Error::UnexpectedEof(start))?,
@@ -125,6 +126,7 @@ impl<R: Read + Seek> Installer<R> {
 
             blocks.push(read_payload(
                 &mut reader,
+                file_size,
                 start,
                 le_u32(&header, 4).ok_or(Error::UnexpectedEof(start))?,
                 le_u32(&header, 8).ok_or(Error::UnexpectedEof(start))?,
@@ -327,6 +329,7 @@ pub fn record_file_name(index: usize, block_count: usize) -> String {
 
 fn read_payload<R: Read + Seek>(
     reader: &mut R,
+    file_size: u64,
     start: u64,
     packed: u32,
     unpacked: u32,
@@ -336,6 +339,21 @@ fn read_payload<R: Read + Seek>(
         offset: start,
         length: packed,
     })?;
+
+    // Reject a declared length that cannot fit in the file before allocating
+    // it: a four-byte field must not be able to request a multi-gigabyte
+    // buffer.
+    let payload_start = reader.stream_position()?;
+    let payload_end =
+        payload_start
+            .checked_add(u64::from(payload))
+            .ok_or(Error::BadBlockLength {
+                offset: start,
+                length: packed,
+            })?;
+    if payload_end > file_size {
+        return Err(Error::UnexpectedEof(payload_end));
+    }
 
     let size = usize::try_from(payload).map_err(|_| Error::BadBlockLength {
         offset: start,

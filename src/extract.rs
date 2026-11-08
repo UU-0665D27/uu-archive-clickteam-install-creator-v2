@@ -4,7 +4,7 @@ use std::io::{Read, Seek};
 use std::path::{Path, PathBuf};
 
 use filetime::FileTime;
-use globset::{Glob, GlobMatcher};
+use globset::{GlobBuilder, GlobMatcher};
 
 use crate::entry::{Entry, FileTimes};
 use crate::error::{Error, Result};
@@ -12,14 +12,18 @@ use crate::installer::Installer;
 
 /// Compiles a glob pattern for [`ExtractOptions::filter`].
 ///
-/// `*` matches path separators as well, so `cstrike/maps/*` also matches
-/// nested paths.
+/// `*` matches within a single path component, while `**` also crosses
+/// directory separators: `cstrike/maps/*` selects files directly inside
+/// `cstrike/maps`, `cstrike/maps/**` selects the whole subtree.
 ///
 /// # Errors
 ///
 /// Returns an error when the pattern is not a valid glob.
 pub fn compile_filter(pattern: &str) -> Result<GlobMatcher> {
-    Ok(Glob::new(pattern)?.compile_matcher())
+    Ok(GlobBuilder::new(pattern)
+        .literal_separator(true)
+        .build()?
+        .compile_matcher())
 }
 
 /// Checks whether an entry matches a compiled filter.

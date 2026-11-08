@@ -6,7 +6,8 @@
 787.6 MiB, побайтовое совпадение с эталонной распаковкой.
 
 Крейт — библиотека; CLI живёт в `examples/unpack.rs`, поэтому `clap` не
-попадает в зависимости библиотеки.
+попадает в зависимости библиотеки. Код использует edition 2024 и собирается
+на актуальном stable Rust.
 
 ## Формат
 
@@ -45,6 +46,8 @@ u8  method                   первый байт потока данных
 
 ## Использование
 
+Готового бинарника в пакете нет: CLI собирается из примера.
+
 ```sh
 # список содержимого
 cargo run --release --example unpack -- installer.exe --list
@@ -52,8 +55,11 @@ cargo run --release --example unpack -- installer.exe --list
 # распаковать всё в unpacked/
 cargo run --release --example unpack -- installer.exe -o cs16
 
-# только карты
+# только файлы из каталога карт
 cargo run --release --example unpack -- installer.exe -o maps --filter 'cstrike/maps/*'
+
+# всё поддерево карт, включая вложенные каталоги
+cargo run --release --example unpack -- installer.exe -o maps --filter 'cstrike/maps/**'
 
 # плюс внутренние блоки инсталлятора в <output>/_installer
 cargo run --release --example unpack -- installer.exe -o cs16 --resources
@@ -62,11 +68,17 @@ cargo run --release --example unpack -- installer.exe -o cs16 --resources
 cargo run --release --example unpack -- installer.exe --no-times
 ```
 
-`--filter` понимает glob в стиле оболочки: `*` совпадает и с `/`, поэтому
-`cstrike/maps/*` захватывает файлы на любой глубине.
+`--filter` понимает glob в стиле оболочки: `*` выбирает файлы внутри одного
+каталога, `**` — рекурсивно. Например, `cstrike/maps/*` возьмёт только файлы
+непосредственно из `cstrike/maps`, а `cstrike/maps/**` — всё поддерево.
 Код возврата: `0` — успех, `1` — были ошибки (или архив не открылся).
 
 ## Библиотека
+
+```toml
+[dependencies]
+uu-archive-clickteam-install-creator-v2 = "0.1"
+```
 
 ```rust
 use std::io::Cursor;
@@ -108,6 +120,23 @@ cargo test                   # unit + интеграционный тест на
 cargo test --examples
 ```
 
+## Фаззинг
+
+В репозитории есть отдельный крейт `fuzz/` с тремя целями:
+
+- `installer_open` — разбирает произвольные байты как установщик и потоково
+  распаковывает записи с ограничением объёма вывода;
+- `entry_stream` — собирает синтетический архив вокруг произвольного блоба и
+  проверяет чанковые декодеры;
+- `safe_paths` — проверяет инварианты санитизации путей: результат относителен,
+  не содержит `..` и корневых компонентов, а повторная обработка его не меняет.
+
+```sh
+cargo fuzz run installer_open
+cargo fuzz run entry_stream
+cargo fuzz run safe_paths
+```
+
 В коде нет `unsafe`, `as`-приведений, `unwrap`/`expect` в библиотеке и
 CLI (паники исключены; в тестах используются обычные assert-макросы).
 
@@ -120,3 +149,14 @@ CLI (паники исключены; в тестах используются �
   распаковываются только файлы и служебные блоки (`--resources`).
 - Восстановление времени ограничено диапазоном 1980..2100; мусорные значения
   игнорируются.
+
+## Лицензия и авторство
+
+Автор — UU <uu230196@gmail.com>. Код распространяется по лицензии
+[MIT](LICENSE): используйте, изменяйте и распространяйте как хотите.
+
+## Ошибки
+
+Проект может содержать ошибки и предоставляется «как есть», без гарантий.
+Сообщения об ошибках и примеры проблемных файлов присылайте в
+[GitHub Issues](https://github.com/UU-0665D27/uu-archive-clickteam-install-creator-v2/issues).
