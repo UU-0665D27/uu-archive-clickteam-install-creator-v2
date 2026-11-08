@@ -1,0 +1,30 @@
+[package]
+name = "uu-archive-clickteam-install-creator-v2"
+version = "0.1.0"
+edition = "2024"
+description = "Unpacker for Clickteam Install Creator 2 self-extracting installers"
+keywords = ["archive", "unpacker", "installer", "clickteam"]
+categories = ["compression", "parser-implementations"]
+
+[lib]
+name = "uu_archive_clickteam_install_creator_v2"
+path = "src/lib.rs"
+
+[lints.clippy]
+all = "deny"
+pedantic = "deny"
+nursery = "deny"
+perf = "deny"
+style = "deny"
+
+[dependencies]
+bzip2 = "0.6"
+encoding_rs = "0.8"
+filetime = "0.2"
+flate2 = "1.1"
+globset = "0.4"
+thiserror = "2"
+
+[dev-dependencies]
+clap = { version = "4.5", features = ["derive"] }
+tempfile = "3"
